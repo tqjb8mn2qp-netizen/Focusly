@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Study Buddy - Smart Student Planner</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="phone-frame">
+        <div class="phone-screen">
+            <!-- Status Bar -->
+            <div class="status-bar">
+                <span class="time">9:41</span>
+                <div class="status-icons">
+                    <span class="signal">📶</span>
+                    <span class="battery">🔋</span>
+                </div>
+            </div>
+
+            <!-- Main Content Container -->
+            <div id="app-container">
+                <!-- Screens will be dynamically loaded here -->
+            </div>
+
+            <!-- Bottom Navigation -->
+            <nav class="bottom-nav">
+                <button class="nav-item active" data-screen="dashboard">
+                    <span class="nav-icon">🏠</span>
+                    <span class="nav-label">Home</span>
+                </button>
+                <button class="nav-item" data-screen="study">
+                    <span class="nav-icon">⏱️</span>
+                    <span class="nav-label">Study</span>
+                </button>
+                <button class="nav-item" data-screen="tasks">
+                    <span class="nav-icon">✅</span>
+                    <span class="nav-label">Tasks</span>
+                </button>
+                <button class="nav-item" data-screen="stats">
+                    <span class="nav-icon">📊</span>
+                    <span class="nav-label">Stats</span>
+                </button>
+                <button class="nav-item" data-screen="profile">
+                    <span class="nav-icon">👤</span>
+                    <span class="nav-label">Profile</span>
+                </button>
+            </nav>
+        </div>
+    </div>
+
+    <!-- Demo Controls -->
+    <div class="demo-controls">
+        <h2>🎓 Study Buddy Interactive Demo</h2>
+        <p>Navigate using the bottom menu or click on interactive elements</p>
+        <div class="feature-highlights">
+            <div class="highlight-card">
+                <span class="highlight-icon">📚</span>
+                <h3>Smart Planner</h3>
+                <p>Organize classes & assignments</p>
+            </div>
+            <div class="highlight-card">
+                <span class="highlight-icon">⏱️</span>
+                <h3>Focus Timer</h3>
+                <p>Pomodoro study sessions</p>
+            </div>
+            <div class="highlight-card">
+                <span class="highlight-icon">🔥</span>
+                <h3>Streaks</h3>
+                <p>Build consistent habits</p>
+            </div>
+            <div class="highlight-card">
+                <span class="highlight-icon">📊</span>
+                <h3>Analytics</h3>
+                <p>Track your progress</p>
+            </div>
+        </div>
+        <button id="reset-demo" class="reset-btn">🔄 Reset Demo</button>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
