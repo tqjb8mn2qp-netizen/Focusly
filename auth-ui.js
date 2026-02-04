@@ -496,9 +496,20 @@ class AuthUI {
 
     // Handle logout
     handleLogout() {
-        if (confirm('Are you sure you want to sign out?')) {
+        // Show professional confirmation modal
+        const confirmed = confirm('🚪 Sign Out\n\nAre you sure you want to sign out? Your data is saved and will be available when you sign back in.');
+        
+        if (confirmed) {
+            // Log out
             this.auth.logout();
-            this.showAuthScreen();
+            
+            // Show success message
+            this.showToast('✅ Signed out successfully', 'success');
+            
+            // Wait a moment before showing auth screen
+            setTimeout(() => {
+                this.showAuthScreen();
+            }, 500);
         }
     }
 }

@@ -1145,9 +1145,25 @@ class UIRenderer {
         const user = this.dm.data.user;
         const xpProgress = (user.xp / user.maxXp) * 100;
         const totalHours = Math.floor(user.totalStudyMinutes / 60);
+        
+        // Check if user is authenticated
+        const isAuthenticated = window.authManager && window.authManager.isAuthenticated();
+        const authUser = isAuthenticated ? window.authManager.getUser() : null;
 
         return `
             <div class="screen" style="padding: 0;">
+                ${isAuthenticated ? `
+                <div class="auth-banner">
+                    <div class="auth-banner-content">
+                        <span class="auth-banner-icon">✅</span>
+                        <div class="auth-banner-text">
+                            <div class="auth-banner-title">Signed in as ${authUser.name}</div>
+                            <div class="auth-banner-email">${authUser.email}</div>
+                        </div>
+                        <span class="auth-banner-provider">${authUser.provider === 'google' ? '🔵 Google' : authUser.provider === 'apple' ? '⚫ Apple' : '📧 Email'}</span>
+                    </div>
+                </div>
+                ` : ''}
                 <div class="profile-header">
                     <div class="profile-avatar">👤</div>
                     <div class="profile-name">${user.name}</div>
@@ -1196,7 +1212,7 @@ class UIRenderer {
                                 <span class="settings-value">${Math.floor(user.dailyGoalMinutes / 60)}h ${user.dailyGoalMinutes % 60}m</span>
                                 <span class="settings-arrow">›</span>
                             </div>
-                            <div class="settings-item" onclick="authUI.handleLogout()" style="color: var(--urgent-red);">
+                            <div class="settings-item sign-out" onclick="authUI.handleLogout()">
                                 <span class="settings-icon">🚪</span>
                                 <span class="settings-label">Sign Out</span>
                                 <span class="settings-arrow">›</span>
