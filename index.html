@@ -23,6 +23,11 @@
                 <!-- Screens will be dynamically loaded here -->
             </div>
 
+            <!-- Quick Add FAB -->
+            <button class="fab" onclick="app.showQuickAddMenu()" title="Quick Add">
+                ➕
+            </button>
+
             <!-- Bottom Navigation -->
             <nav class="bottom-nav">
                 <button class="nav-item active" data-screen="dashboard">
@@ -36,6 +41,10 @@
                 <button class="nav-item" data-screen="tasks">
                     <span class="nav-icon">✅</span>
                     <span class="nav-label">Tasks</span>
+                </button>
+                <button class="nav-item" data-screen="grades">
+                    <span class="nav-icon">🎓</span>
+                    <span class="nav-label">Grades</span>
                 </button>
                 <button class="nav-item" data-screen="stats">
                     <span class="nav-icon">📊</span>

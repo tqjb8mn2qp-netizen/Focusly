@@ -86,8 +86,28 @@ class DataManager {
         return this.data.subjects.find(s => s.id === id);
     }
 
+    // Category definitions
+    getCategories() {
+        return {
+            homework: { icon: '📝', color: '#4A90E2', label: 'Homework', weight: 10 },
+            quiz: { icon: '📋', color: '#F5A623', label: 'Quiz', weight: 20 },
+            exam: { icon: '📚', color: '#D0021B', label: 'Exam', weight: 50 },
+            project: { icon: '🎯', color: '#9013FE', label: 'Project', weight: 30 }
+        };
+    }
+
+    getDefaultWeight(type) {
+        const categories = this.getCategories();
+        return categories[type]?.weight || 10;
+    }
+
+    getCategoryInfo(type) {
+        const categories = this.getCategories();
+        return categories[type] || categories.homework;
+    }
+
     // Assignment operations
-    addAssignment(title, subjectId, dueDate, priority, description = '') {
+    addAssignment(title, subjectId, dueDate, priority, description = '', type = 'homework') {
         const assignment = {
             id: this.generateId(),
             title,
@@ -95,6 +115,9 @@ class DataManager {
             dueDate: new Date(dueDate).toISOString(),
             priority,
             description,
+            type, // NEW: homework, quiz, exam, project
+            grade: null, // NEW: for grade tracking
+            weight: this.getDefaultWeight(type), // NEW
             completed: false,
             createdAt: new Date().toISOString()
         };
@@ -121,6 +144,89 @@ class DataManager {
     deleteAssignment(id) {
         this.data.assignments = this.data.assignments.filter(a => a.id !== id);
         this.save();
+    }
+
+    // Grade operations
+    addGrade(assignmentId, score, maxScore = 100) {
+        const assignment = this.data.assignments.find(a => a.id === assignmentId);
+        if (assignment) {
+            assignment.grade = {
+                score,
+                maxScore,
+                percentage: (score / maxScore) * 100,
+                dateGraded: new Date().toISOString()
+            };
+            this.save();
+            this.updateSubjectGrade(assignment.subjectId);
+        }
+        return assignment;
+    }
+
+    updateSubjectGrade(subjectId) {
+        const subject = this.getSubject(subjectId);
+        if (!subject) return;
+
+        const gradedAssignments = this.data.assignments.filter(a => 
+            a.subjectId === subjectId && a.grade && a.completed
+        );
+
+        if (gradedAssignments.length === 0) {
+            subject.currentGrade = null;
+            return;
+        }
+
+        // Calculate weighted average
+        let totalWeightedScore = 0;
+        let totalWeight = 0;
+
+        gradedAssignments.forEach(a => {
+            totalWeightedScore += a.grade.percentage * a.weight;
+            totalWeight += a.weight;
+        });
+
+        subject.currentGrade = totalWeight > 0 ? totalWeightedScore / totalWeight : null;
+        this.save();
+    }
+
+    calculateGPA() {
+        const subjectsWithGrades = this.data.subjects.filter(s => s.currentGrade != null);
+        if (subjectsWithGrades.length === 0) return null;
+
+        const totalGPA = subjectsWithGrades.reduce((sum, s) => {
+            return sum + this.percentageToGPA(s.currentGrade);
+        }, 0);
+
+        return (totalGPA / subjectsWithGrades.length).toFixed(2);
+    }
+
+    percentageToGPA(percentage) {
+        if (percentage >= 97) return 4.0;
+        if (percentage >= 93) return 4.0;
+        if (percentage >= 90) return 3.7;
+        if (percentage >= 87) return 3.3;
+        if (percentage >= 83) return 3.0;
+        if (percentage >= 80) return 2.7;
+        if (percentage >= 77) return 2.3;
+        if (percentage >= 73) return 2.0;
+        if (percentage >= 70) return 1.7;
+        if (percentage >= 67) return 1.3;
+        if (percentage >= 65) return 1.0;
+        return 0.0;
+    }
+
+    getLetterGrade(percentage) {
+        if (percentage >= 97) return 'A+';
+        if (percentage >= 93) return 'A';
+        if (percentage >= 90) return 'A-';
+        if (percentage >= 87) return 'B+';
+        if (percentage >= 83) return 'B';
+        if (percentage >= 80) return 'B-';
+        if (percentage >= 77) return 'C+';
+        if (percentage >= 73) return 'C';
+        if (percentage >= 70) return 'C-';
+        if (percentage >= 67) return 'D+';
+        if (percentage >= 65) return 'D';
+        return 'F';
     }
 
     // Task operations
@@ -515,6 +621,7 @@ class UIRenderer {
                     <div class="card-header">Upcoming Assignments (${upcomingAssignments.length})</div>
                     ${upcomingAssignments.length > 0 ? upcomingAssignments.map(assignment => {
                         const subject = this.dm.getSubject(assignment.subjectId);
+                        const categoryInfo = this.dm.getCategoryInfo(assignment.type || 'homework');
                         const dueDate = new Date(assignment.dueDate);
                         const daysUntil = Math.ceil((dueDate - new Date()) / (1000 * 60 * 60 * 24));
                         const dueText = daysUntil === 0 ? 'Today' : 
@@ -522,12 +629,20 @@ class UIRenderer {
                                        daysUntil < 0 ? 'Overdue' :
                                        `${daysUntil} days`;
                         
+                        const priorityColor = assignment.priority === 'high' ? '#D0021B' : 
+                                            assignment.priority === 'medium' ? '#F5A623' : '#7ED321';
+                        
                         return `
-                            <div class="assignment-item ${assignment.priority}-priority" onclick="app.toggleAssignment('${assignment.id}')">
+                            <div class="assignment-item ${assignment.priority}-priority" onclick="app.toggleAssignment('${assignment.id}')" style="border-left: 4px solid ${priorityColor};">
                                 <span class="assignment-checkbox">${assignment.completed ? '☑️' : '☐'}</span>
                                 <div class="assignment-details">
-                                    <div class="assignment-title">${assignment.title}</div>
+                                    <div class="assignment-title">
+                                        <span style="font-size: 18px; margin-right: 6px;">${categoryInfo.icon}</span>
+                                        ${assignment.title}
+                                    </div>
                                     <div class="assignment-meta">
+                                        <span class="category-badge" style="background: ${categoryInfo.color}20; color: ${categoryInfo.color}; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600;">${categoryInfo.label.toUpperCase()}</span>
+                                        <span>•</span>
                                         <span>${subject.icon} ${subject.name}</span>
                                         <span>•</span>
                                         <span>Due: ${dueText}</span>
@@ -875,6 +990,89 @@ class UIRenderer {
         `;
     }
 
+    renderGrades() {
+        const subjects = this.dm.data.subjects;
+        const overallGPA = this.dm.calculateGPA();
+        
+        const subjectsWithGrades = subjects.filter(s => s.currentGrade != null);
+        
+        return `
+            <div class="screen">
+                <div class="screen-header">
+                    <div class="screen-title">Grade Tracker</div>
+                    <button class="icon-btn" title="Info">ℹ️</button>
+                </div>
+
+                ${overallGPA ? `
+                    <div class="card" style="background: linear-gradient(135deg, var(--primary-blue) 0%, var(--purple) 100%); color: white;">
+                        <div style="text-align: center;">
+                            <div style="font-size: 14px; opacity: 0.9; margin-bottom: 8px;">Overall GPA</div>
+                            <div style="font-size: 48px; font-weight: 700; margin-bottom: 8px;">${overallGPA}</div>
+                            <div style="font-size: 16px; opacity: 0.9;">out of 4.0</div>
+                        </div>
+                    </div>
+                ` : `
+                    <div class="empty-state">
+                        <div class="empty-icon">🎓</div>
+                        <div class="empty-title">No grades yet</div>
+                        <div class="empty-description">Complete assignments and add grades to track your progress</div>
+                    </div>
+                `}
+
+                ${subjectsWithGrades.length > 0 ? `
+                    <div class="card">
+                        <div class="card-header">Subject Grades</div>
+                        ${subjectsWithGrades.map(subject => {
+                            const percentage = subject.currentGrade.toFixed(1);
+                            const letterGrade = this.dm.getLetterGrade(subject.currentGrade);
+                            const progressWidth = Math.min(subject.currentGrade, 100);
+                            
+                            return `
+                                <div style="margin-bottom: 20px;">
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                        <div style="font-weight: 600; color: var(--dark-gray);">
+                                            ${subject.icon} ${subject.name}
+                                        </div>
+                                        <div style="font-size: 20px; font-weight: 700; color: var(--primary-blue);">
+                                            ${letterGrade}
+                                        </div>
+                                    </div>
+                                    <div class="progress-bar" style="height: 10px;">
+                                        <div class="progress-fill" style="width: ${progressWidth}%; background: ${subject.color};"></div>
+                                    </div>
+                                    <div style="text-align: center; margin-top: 4px; font-size: 13px; color: var(--medium-gray);">
+                                        ${percentage}%
+                                    </div>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                ` : ''}
+
+                <div class="card">
+                    <div class="card-header">How Grading Works</div>
+                    <div style="font-size: 14px; color: var(--dark-gray); line-height: 1.6;">
+                        <p style="margin-bottom: 12px;">
+                            📝 Complete assignments and add your grades to track your academic progress.
+                        </p>
+                        <p style="margin-bottom: 12px;">
+                            📊 Your subject average is calculated using weighted scores based on assignment types:
+                        </p>
+                        <ul style="margin-left: 20px; margin-bottom: 12px;">
+                            <li>📝 Homework: 10 points</li>
+                            <li>📋 Quiz: 20 points</li>
+                            <li>🎯 Project: 30 points</li>
+                            <li>📚 Exam: 50 points</li>
+                        </ul>
+                        <p>
+                            🎓 Overall GPA is calculated on a 4.0 scale using standard letter grade conversions.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
     renderProfile() {
         const user = this.dm.data.user;
         const xpProgress = (user.xp / user.maxXp) * 100;
@@ -987,6 +1185,9 @@ class UIRenderer {
                 break;
             case 'stats':
                 container.innerHTML = this.renderStats();
+                break;
+            case 'grades':
+                container.innerHTML = this.renderGrades();
                 break;
             case 'profile':
                 container.innerHTML = this.renderProfile();
@@ -1175,32 +1376,48 @@ class StudyBuddyApp {
     // Assignment methods
     showAddAssignmentModal() {
         const subjects = this.dm.data.subjects;
+        const categories = this.dm.getCategories();
         
         this.modal.showModal(
             'Add Assignment',
             `
                 <input type="text" id="assignment-title" placeholder="Assignment title" class="modal-input">
+                
+                <label style="font-size: 14px; font-weight: 600; margin: 8px 0 4px; display: block;">Type</label>
+                <select id="assignment-type" class="modal-input">
+                    ${Object.entries(categories).map(([key, cat]) => 
+                        `<option value="${key}">${cat.icon} ${cat.label}</option>`
+                    ).join('')}
+                </select>
+                
+                <label style="font-size: 14px; font-weight: 600; margin: 8px 0 4px; display: block;">Subject</label>
                 <select id="assignment-subject" class="modal-input">
                     ${subjects.map(s => `<option value="${s.id}">${s.icon} ${s.name}</option>`).join('')}
                 </select>
+                
+                <label style="font-size: 14px; font-weight: 600; margin: 8px 0 4px; display: block;">Due Date</label>
                 <input type="date" id="assignment-due" class="modal-input" value="${new Date().toISOString().split('T')[0]}">
+                
+                <label style="font-size: 14px; font-weight: 600; margin: 8px 0 4px; display: block;">Priority</label>
                 <select id="assignment-priority" class="modal-input">
-                    <option value="low">Low Priority</option>
-                    <option value="medium" selected>Medium Priority</option>
-                    <option value="high">High Priority</option>
+                    <option value="low">🟢 Low Priority</option>
+                    <option value="medium" selected>🟡 Medium Priority</option>
+                    <option value="high">🔴 High Priority</option>
                 </select>
+                
                 <textarea id="assignment-description" placeholder="Description (optional)" class="modal-input" rows="3"></textarea>
             `,
             () => {
                 const title = document.getElementById('assignment-title').value.trim();
+                const type = document.getElementById('assignment-type').value;
                 const subjectId = document.getElementById('assignment-subject').value;
                 const dueDate = document.getElementById('assignment-due').value;
                 const priority = document.getElementById('assignment-priority').value;
                 const description = document.getElementById('assignment-description').value.trim();
                 
                 if (title && subjectId && dueDate) {
-                    this.dm.addAssignment(title, subjectId, dueDate, priority, description);
-                    this.ui.showToast('✅ Assignment added!');
+                    this.dm.addAssignment(title, subjectId, dueDate, priority, description, type);
+                    this.ui.showToast(`✅ ${categories[type].label} added!`);
                     this.ui.render(this.ui.currentScreen);
                     return true;
                 }
@@ -1210,8 +1427,67 @@ class StudyBuddyApp {
     }
 
     toggleAssignment(id) {
-        this.dm.toggleAssignment(id);
-        this.ui.render(this.ui.currentScreen);
+        const assignment = this.dm.data.assignments.find(a => a.id === id);
+        if (!assignment) return;
+        
+        // If marking as complete and no grade yet, offer to add grade
+        if (!assignment.completed && !assignment.grade) {
+            this.dm.toggleAssignment(id);
+            this.ui.render(this.ui.currentScreen);
+            
+            // Prompt to add grade
+            setTimeout(() => {
+                if (confirm(`✅ Assignment completed! Would you like to add a grade?`)) {
+                    this.showAddGradeModal(id);
+                }
+            }, 300);
+        } else {
+            this.dm.toggleAssignment(id);
+            this.ui.render(this.ui.currentScreen);
+        }
+    }
+
+    showAddGradeModal(assignmentId) {
+        const assignment = this.dm.data.assignments.find(a => a.id === assignmentId);
+        if (!assignment) return;
+        
+        const subject = this.dm.getSubject(assignment.subjectId);
+        const categoryInfo = this.dm.getCategoryInfo(assignment.type || 'homework');
+        
+        this.modal.showModal(
+            'Add Grade',
+            `
+                <div style="margin-bottom: 16px;">
+                    <div style="font-weight: 600; margin-bottom: 4px;">${assignment.title}</div>
+                    <div style="font-size: 13px; color: var(--medium-gray);">
+                        ${categoryInfo.icon} ${categoryInfo.label} • ${subject.icon} ${subject.name}
+                    </div>
+                </div>
+                
+                <label style="font-size: 14px; font-weight: 600; margin: 8px 0 4px; display: block;">Score (%)</label>
+                <input type="number" id="grade-score" placeholder="95" min="0" max="100" class="modal-input">
+                
+                <label style="font-size: 14px; font-weight: 600; margin: 8px 0 4px; display: block;">Weight (points)</label>
+                <input type="number" id="grade-weight" value="${assignment.weight}" class="modal-input">
+                
+                <div style="font-size: 12px; color: var(--medium-gray); margin-top: 8px;">
+                    This grade will be used to calculate your ${subject.name} average and overall GPA.
+                </div>
+            `,
+            () => {
+                const score = parseFloat(document.getElementById('grade-score').value);
+                const weight = parseInt(document.getElementById('grade-weight').value);
+                
+                if (score >= 0 && score <= 100 && weight > 0) {
+                    assignment.weight = weight;
+                    this.dm.addGrade(assignmentId, score, 100);
+                    this.ui.showToast(`🎉 Grade added: ${score}%!`);
+                    this.ui.render(this.ui.currentScreen);
+                    return true;
+                }
+                return false;
+            }
+        );
     }
 
     // Task methods
@@ -1320,6 +1596,39 @@ class StudyBuddyApp {
             this.ui.showToast('🗑️ All data cleared');
             this.ui.render('dashboard');
         }
+    }
+
+    // Quick Add menu
+    showQuickAddMenu() {
+        const categories = this.dm.getCategories();
+        
+        this.modal.showModal(
+            '⚡ Quick Add',
+            `
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-top: 12px;">
+                    ${Object.entries(categories).map(([key, cat]) => `
+                        <button class="quick-add-option" onclick="app.quickAddAssignment('${key}'); document.querySelector('.modal-overlay').remove();" style="padding: 16px; background: ${cat.color}10; border: 2px solid ${cat.color}; border-radius: 12px; cursor: pointer; transition: all 0.2s;">
+                            <div style="font-size: 32px; margin-bottom: 8px;">${cat.icon}</div>
+                            <div style="font-weight: 600; color: ${cat.color};">${cat.label}</div>
+                        </button>
+                    `).join('')}
+                </div>
+                
+                <button class="btn btn-secondary" style="margin-top: 16px;" onclick="app.showAddTaskModal(); document.querySelector('.modal-overlay').remove();">
+                    ✅ Simple Task
+                </button>
+            `,
+            () => { return true; }
+        );
+    }
+
+    quickAddAssignment(type) {
+        // Pre-fill type and show full form
+        this.showAddAssignmentModal();
+        setTimeout(() => {
+            const typeSelect = document.getElementById('assignment-type');
+            if (typeSelect) typeSelect.value = type;
+        }, 100);
     }
 }
 

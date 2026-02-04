@@ -126,6 +126,7 @@ body {
     justify-content: space-around;
     align-items: center;
     padding: 8px 0 12px;
+    overflow-x: auto;
 }
 
 .nav-item {
@@ -134,11 +135,12 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 4px;
+    gap: 2px;
     cursor: pointer;
     transition: all 0.2s;
     flex: 1;
-    padding: 4px;
+    padding: 4px 2px;
+    min-width: 50px;
 }
 
 .nav-icon {
@@ -1100,6 +1102,46 @@ body {
     animation: slideInDown 0.3s ease-out, fadeOut 0.3s ease-out 2.7s;
 }
 
+/* Floating Action Button (FAB) */
+.fab {
+    position: fixed;
+    bottom: 85px;
+    right: 20px;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: var(--primary-blue);
+    color: white;
+    border: none;
+    font-size: 24px;
+    box-shadow: 0 4px 12px rgba(74, 144, 226, 0.4);
+    cursor: pointer;
+    transition: all 0.3s;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.fab:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 16px rgba(74, 144, 226, 0.5);
+}
+
+.fab:active {
+    transform: scale(0.95);
+}
+
+/* Category Badge */
+.category-badge {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
 /* Quick Actions */
 .quick-actions {
     display: grid;
@@ -1135,4 +1177,184 @@ body {
 .quick-action-label {
     font-weight: 600;
     font-size: 14px;
+}
+
+/* ===========================
+   Floating Action Button (FAB)
+   =========================== */
+.fab {
+    position: fixed;
+    bottom: 80px; /* Above bottom nav */
+    right: 20px;
+    width: 56px;
+    height: 56px;
+    background: linear-gradient(135deg, var(--primary-blue), var(--purple));
+    border-radius: 50%;
+    border: none;
+    box-shadow: 0 4px 16px rgba(74, 144, 226, 0.4);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 998;
+}
+
+.fab:hover {
+    transform: scale(1.1) rotate(90deg);
+    box-shadow: 0 6px 24px rgba(74, 144, 226, 0.6);
+}
+
+.fab:active {
+    transform: scale(0.95);
+}
+
+.fab-icon {
+    font-size: 28px;
+    color: var(--white);
+    transition: transform 0.3s;
+}
+
+/* Quick Add Menu */
+.quick-add-menu {
+    position: fixed;
+    bottom: 145px; /* Above FAB */
+    right: 20px;
+    background: var(--white);
+    border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.16);
+    padding: 12px;
+    display: none;
+    flex-direction: column;
+    gap: 8px;
+    z-index: 999;
+    min-width: 200px;
+    animation: slideInUp 0.3s ease-out;
+}
+
+.quick-add-menu.active {
+    display: flex;
+}
+
+@keyframes slideInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.quick-add-option {
+    padding: 14px 16px;
+    background: var(--bg-color);
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transition: all 0.2s;
+    font-size: 15px;
+    font-weight: 500;
+}
+
+.quick-add-option:hover {
+    background: var(--primary-blue);
+    color: var(--white);
+    transform: translateX(-4px);
+}
+
+.quick-add-option-icon {
+    font-size: 20px;
+}
+
+/* Category Badges */
+.category-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.category-homework {
+    background: #E3F2FD;
+    color: #1976D2;
+}
+
+.category-quiz {
+    background: #FFF3E0;
+    color: #F57C00;
+}
+
+.category-exam {
+    background: #FFEBEE;
+    color: #C62828;
+}
+
+.category-project {
+    background: #F3E5F5;
+    color: #7B1FA2;
+}
+
+/* Priority Borders */
+.priority-low {
+    border-left: 4px solid var(--success-green);
+}
+
+.priority-medium {
+    border-left: 4px solid var(--warning-orange);
+}
+
+.priority-high {
+    border-left: 4px solid var(--urgent-red);
+}
+
+/* Grades Section */
+.grade-input-group {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 12px;
+}
+
+.grade-input {
+    width: 80px;
+    padding: 8px 12px;
+    border: 2px solid var(--light-gray);
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    text-align: center;
+}
+
+.grade-display {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background: var(--success-green);
+    color: var(--white);
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.grade-average {
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--primary-blue);
+    margin: 16px 0;
+}
+
+.gpa-display {
+    font-size: 24px;
+    font-weight: 600;
+    color: var(--purple);
 }
