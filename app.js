@@ -39,6 +39,11 @@ class DataManager {
                 createdAt: new Date().toISOString(),
                 lastLoginDate: new Date().toDateString()
             },
+            timerPreferences: {
+                mode: 'pomodoro',
+                customWorkMinutes: 25,
+                customBreakMinutes: 5
+            },
             subjects: [
                 { id: this.generateId(), name: 'Mathematics', color: '#3498DB', icon: '📘', totalMinutes: 0 },
                 { id: this.generateId(), name: 'Biology', color: '#27AE60', icon: '📗', totalMinutes: 0 },
@@ -66,6 +71,22 @@ class DataManager {
     updateUser(updates) {
         this.data.user = { ...this.data.user, ...updates };
         this.save();
+    }
+    
+    // Timer preferences
+    updateTimerPreferences(updates) {
+        if (!this.data.timerPreferences) {
+            this.data.timerPreferences = { mode: 'pomodoro', customWorkMinutes: 25, customBreakMinutes: 5 };
+        }
+        this.data.timerPreferences = { ...this.data.timerPreferences, ...updates };
+        this.save();
+    }
+    
+    getTimerPreferences() {
+        if (!this.data.timerPreferences) {
+            this.data.timerPreferences = { mode: 'pomodoro', customWorkMinutes: 25, customBreakMinutes: 5 };
+        }
+        return this.data.timerPreferences;
     }
 
     // Subject operations
@@ -420,6 +441,8 @@ class PomodoroTimer {
         this.interval = null;
         this.mode = 'pomodoro'; // pomodoro, deepFocus, custom
         this.sessionCount = 0;
+        this.customWorkMinutes = 25; // NEW: custom work duration
+        this.customBreakMinutes = 5; // NEW: custom break duration
     }
 
     setMode(mode) {
@@ -434,7 +457,9 @@ class PomodoroTimer {
                 this.totalTime = 50 * 60;
                 break;
             case 'custom':
-                // Can be set externally
+                // Use custom work minutes
+                this.timeLeft = this.customWorkMinutes * 60;
+                this.totalTime = this.customWorkMinutes * 60;
                 break;
         }
     }
@@ -442,6 +467,17 @@ class PomodoroTimer {
     setCustomTime(minutes) {
         this.timeLeft = minutes * 60;
         this.totalTime = minutes * 60;
+    }
+    
+    setCustomWork(minutes) {
+        this.customWorkMinutes = minutes;
+        if (this.mode === 'custom' && !this.isRunning && !this.isPaused) {
+            this.setCustomTime(minutes);
+        }
+    }
+    
+    setCustomBreak(minutes) {
+        this.customBreakMinutes = minutes;
     }
 
     start() {
@@ -725,7 +761,39 @@ class UIRenderer {
                                 <div style="font-size: 13px; color: var(--medium-gray);">50 min work, 10 min break</div>
                             </div>
                         </div>
+                        <div class="mode-option ${this.timer.mode === 'custom' ? 'selected' : ''}" onclick="app.setTimerMode('custom')">
+                            <div class="mode-radio"></div>
+                            <div>
+                                <div style="font-weight: 600;">Custom ⚙️</div>
+                                <div style="font-size: 13px; color: var(--medium-gray);">Set your own time</div>
+                            </div>
+                        </div>
                     </div>
+
+                    ${this.timer.mode === 'custom' && !this.timer.isRunning && !this.timer.isPaused ? `
+                        <div class="custom-timer-controls" style="margin-top: 16px; padding: 16px; background: var(--bg-color); border-radius: 12px;">
+                            <div style="margin-bottom: 12px;">
+                                <label style="font-size: 14px; font-weight: 600; margin-bottom: 4px; display: block;">Work Duration (minutes)</label>
+                                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 8px;">
+                                    <button class="preset-btn ${this.timer.customWorkMinutes === 15 ? 'active' : ''}" onclick="app.setCustomWork(15)">15</button>
+                                    <button class="preset-btn ${this.timer.customWorkMinutes === 25 ? 'active' : ''}" onclick="app.setCustomWork(25)">25</button>
+                                    <button class="preset-btn ${this.timer.customWorkMinutes === 45 ? 'active' : ''}" onclick="app.setCustomWork(45)">45</button>
+                                    <button class="preset-btn ${this.timer.customWorkMinutes === 60 ? 'active' : ''}" onclick="app.setCustomWork(60)">60</button>
+                                </div>
+                                <input type="number" id="custom-work" class="modal-input" value="${this.timer.customWorkMinutes || 25}" min="1" max="180" placeholder="Enter minutes" onchange="app.setCustomWork(parseInt(this.value))">
+                            </div>
+                            <div>
+                                <label style="font-size: 14px; font-weight: 600; margin-bottom: 4px; display: block;">Break Duration (minutes)</label>
+                                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 8px;">
+                                    <button class="preset-btn ${this.timer.customBreakMinutes === 5 ? 'active' : ''}" onclick="app.setCustomBreak(5)">5</button>
+                                    <button class="preset-btn ${this.timer.customBreakMinutes === 10 ? 'active' : ''}" onclick="app.setCustomBreak(10)">10</button>
+                                    <button class="preset-btn ${this.timer.customBreakMinutes === 15 ? 'active' : ''}" onclick="app.setCustomBreak(15)">15</button>
+                                    <button class="preset-btn ${this.timer.customBreakMinutes === 20 ? 'active' : ''}" onclick="app.setCustomBreak(20)">20</button>
+                                </div>
+                                <input type="number" id="custom-break" class="modal-input" value="${this.timer.customBreakMinutes || 5}" min="1" max="60" placeholder="Enter minutes" onchange="app.setCustomBreak(parseInt(this.value))">
+                            </div>
+                        </div>
+                    ` : ''}
 
                     <div class="timer-display">
                         <div class="timer-time">${this.timer.formatTime()}</div>
@@ -1307,6 +1375,14 @@ class StudyBuddyApp {
         this.ui = new UIRenderer(this.dm);
         this.modal = new ModalManager();
         
+        // Load timer preferences
+        const timerPrefs = this.dm.getTimerPreferences();
+        this.ui.timer.customWorkMinutes = timerPrefs.customWorkMinutes;
+        this.ui.timer.customBreakMinutes = timerPrefs.customBreakMinutes;
+        if (timerPrefs.mode) {
+            this.ui.timer.mode = timerPrefs.mode;
+        }
+        
         // Request notification permission
         if ('Notification' in window && Notification.permission === 'default') {
             Notification.requestPermission();
@@ -1340,7 +1416,24 @@ class StudyBuddyApp {
     // Timer methods
     setTimerMode(mode) {
         this.ui.timer.setMode(mode);
+        this.dm.updateTimerPreferences({ mode });
         this.ui.render('study');
+    }
+    
+    setCustomWork(minutes) {
+        if (minutes >= 1 && minutes <= 180) {
+            this.ui.timer.setCustomWork(minutes);
+            this.dm.updateTimerPreferences({ customWorkMinutes: minutes });
+            this.ui.render('study');
+        }
+    }
+    
+    setCustomBreak(minutes) {
+        if (minutes >= 1 && minutes <= 60) {
+            this.ui.timer.setCustomBreak(minutes);
+            this.dm.updateTimerPreferences({ customBreakMinutes: minutes });
+            this.ui.render('study');
+        }
     }
 
     startTimer() {

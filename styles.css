@@ -1358,3 +1358,51 @@ body {
     font-weight: 600;
     color: var(--purple);
 }
+
+/* ===========================
+   Custom Timer Controls
+   =========================== */
+.custom-timer-controls {
+    animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.preset-btn {
+    padding: 12px;
+    background: var(--white);
+    border: 2px solid var(--light-gray);
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--dark-gray);
+    transition: all 0.2s;
+}
+
+.preset-btn:hover {
+    border-color: var(--primary-blue);
+    background: #E3F2FD;
+    transform: translateY(-2px);
+}
+
+.preset-btn.active {
+    background: var(--primary-blue);
+    color: var(--white);
+    border-color: var(--primary-blue);
+}
+
+.custom-timer-controls input[type="number"] {
+    text-align: center;
+    font-size: 16px;
+    font-weight: 600;
+}
