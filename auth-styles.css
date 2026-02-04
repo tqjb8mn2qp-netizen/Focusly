@@ -41,6 +41,12 @@
     margin-bottom: 10px;
 }
 
+.auth-logo-icon-svg {
+    margin: 0 auto 10px;
+    display: block;
+    filter: drop-shadow(0 4px 8px rgba(0,0,0,0.1));
+}
+
 .auth-logo-text {
     font-size: 28px;
     font-weight: 700;
@@ -205,7 +211,11 @@
 }
 
 .auth-social-icon {
-    font-size: 20px;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .auth-footer {
