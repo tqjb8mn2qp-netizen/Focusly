@@ -2,12 +2,16 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Study Buddy - Smart Student Planner</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <div class="phone-frame">
+    <!-- Responsive wrapper: shows phone frame on desktop, fullscreen on mobile -->
+    <div id="app-wrapper" class="phone-frame">
         <div class="phone-screen">
             <!-- Status Bar -->
             <div class="status-bar">
@@ -58,7 +62,7 @@
         </div>
     </div>
 
-    <!-- Demo Controls -->
+    <!-- Demo Controls (hidden on mobile) -->
     <div class="demo-controls">
         <h2>🎓 Study Buddy Interactive Demo</h2>
         <p>Navigate using the bottom menu or click on interactive elements</p>
@@ -86,6 +90,153 @@
         </div>
         <button id="reset-demo" class="reset-btn">🔄 Reset Demo</button>
     </div>
+
+    <!-- Device detector script (runs before app.js) -->
+    <script>
+        // Device Detection and Responsive Layout Handler
+        class DeviceDetector {
+            constructor() {
+                this.deviceType = this.detectDeviceType();
+                this.screenSize = this.getScreenSize();
+                this.orientation = this.getOrientation();
+                this.init();
+            }
+
+            detectDeviceType() {
+                const ua = navigator.userAgent.toLowerCase();
+                const width = window.innerWidth;
+                
+                // Check user agent for mobile/tablet
+                const isMobile = /iphone|ipod|android|blackberry|opera mini|windows phone/i.test(ua);
+                const isTablet = /ipad|android(?!.*mobile)|tablet|kindle|silk/i.test(ua);
+                
+                // Also check screen width as fallback
+                if (isMobile || width < 768) {
+                    return 'mobile';
+                } else if (isTablet || (width >= 768 && width < 1024)) {
+                    return 'tablet';
+                } else {
+                    return 'desktop';
+                }
+            }
+
+            getScreenSize() {
+                const width = window.innerWidth;
+                const height = window.innerHeight;
+                
+                return {
+                    width,
+                    height,
+                    aspectRatio: (width / height).toFixed(2),
+                    isSmall: width < 375,
+                    isMedium: width >= 375 && width < 768,
+                    isLarge: width >= 768
+                };
+            }
+
+            getOrientation() {
+                return window.innerWidth > window.innerHeight ? 'landscape' : 'portrait';
+            }
+
+            init() {
+                // Add device class to body
+                document.body.classList.add(`device-${this.deviceType}`);
+                document.body.classList.add(`orientation-${this.orientation}`);
+                
+                // Apply responsive layout
+                this.applyResponsiveLayout();
+                
+                // Listen for resize and orientation changes
+                window.addEventListener('resize', () => this.handleResize());
+                window.addEventListener('orientationchange', () => this.handleOrientationChange());
+                
+                // Log device info
+                console.log('📱 Device Detected:', {
+                    type: this.deviceType,
+                    screen: this.screenSize,
+                    orientation: this.orientation,
+                    userAgent: navigator.userAgent
+                });
+            }
+
+            applyResponsiveLayout() {
+                const wrapper = document.getElementById('app-wrapper');
+                const demoControls = document.querySelector('.demo-controls');
+                
+                if (this.deviceType === 'mobile') {
+                    // Mobile: Remove phone frame, go fullscreen
+                    wrapper.classList.remove('phone-frame');
+                    wrapper.classList.add('fullscreen-app');
+                    if (demoControls) demoControls.style.display = 'none';
+                    
+                    // Update status bar time to real time
+                    this.updateRealTime();
+                } else if (this.deviceType === 'tablet') {
+                    // Tablet: Larger phone frame or fullscreen depending on preference
+                    wrapper.classList.remove('phone-frame');
+                    wrapper.classList.add('tablet-app');
+                    if (demoControls) demoControls.style.display = 'none';
+                } else {
+                    // Desktop: Keep phone frame
+                    wrapper.classList.add('phone-frame');
+                    if (demoControls) demoControls.style.display = 'block';
+                }
+            }
+
+            updateRealTime() {
+                const updateTime = () => {
+                    const now = new Date();
+                    const hours = now.getHours();
+                    const minutes = now.getMinutes();
+                    const timeString = `${hours}:${minutes.toString().padStart(2, '0')}`;
+                    const timeElement = document.querySelector('.status-bar .time');
+                    if (timeElement) {
+                        timeElement.textContent = timeString;
+                    }
+                };
+                
+                updateTime();
+                setInterval(updateTime, 60000); // Update every minute
+            }
+
+            handleResize() {
+                this.screenSize = this.getScreenSize();
+                this.deviceType = this.detectDeviceType();
+                
+                // Remove old classes
+                document.body.classList.remove('device-mobile', 'device-tablet', 'device-desktop');
+                
+                // Add new class
+                document.body.classList.add(`device-${this.deviceType}`);
+                
+                // Reapply layout
+                this.applyResponsiveLayout();
+            }
+
+            handleOrientationChange() {
+                setTimeout(() => {
+                    this.orientation = this.getOrientation();
+                    document.body.classList.remove('orientation-portrait', 'orientation-landscape');
+                    document.body.classList.add(`orientation-${this.orientation}`);
+                    console.log('📱 Orientation changed to:', this.orientation);
+                }, 200);
+            }
+
+            getDeviceInfo() {
+                return {
+                    type: this.deviceType,
+                    screen: this.screenSize,
+                    orientation: this.orientation,
+                    isTouchDevice: 'ontouchstart' in window,
+                    pixelRatio: window.devicePixelRatio || 1
+                };
+            }
+        }
+
+        // Initialize device detector immediately
+        const deviceDetector = new DeviceDetector();
+        window.deviceDetector = deviceDetector; // Make available globally
+    </script>
 
     <script src="app.js"></script>
 </body>
