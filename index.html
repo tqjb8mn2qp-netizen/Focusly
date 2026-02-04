@@ -75,8 +75,8 @@
 
 </head>
 <body>
-    <!-- Responsive wrapper: shows phone frame on desktop, fullscreen on mobile -->
-    <div id="app-wrapper" class="phone-frame">
+    <!-- Responsive wrapper: fullscreen app for all devices -->
+    <div id="app-wrapper" class="fullscreen-app">
         <div class="phone-screen">
             <!-- Status Bar -->
             <div class="status-bar">
@@ -127,8 +127,8 @@
         </div>
     </div>
 
-    <!-- Demo Controls (hidden on mobile) -->
-    <div class="demo-controls">
+    <!-- Demo Controls (hidden in production) -->
+    <div class="demo-controls" style="display: none;">
         <h2>🎓 Study Buddy Interactive Demo</h2>
         <p>Navigate using the bottom menu or click on interactive elements</p>
         <div class="feature-highlights">
@@ -228,24 +228,13 @@
                 const wrapper = document.getElementById('app-wrapper');
                 const demoControls = document.querySelector('.demo-controls');
                 
-                if (this.deviceType === 'mobile') {
-                    // Mobile: Remove phone frame, go fullscreen
-                    wrapper.classList.remove('phone-frame');
-                    wrapper.classList.add('fullscreen-app');
-                    if (demoControls) demoControls.style.display = 'none';
-                    
-                    // Update status bar time to real time
-                    this.updateRealTime();
-                } else if (this.deviceType === 'tablet') {
-                    // Tablet: Larger phone frame or fullscreen depending on preference
-                    wrapper.classList.remove('phone-frame');
-                    wrapper.classList.add('tablet-app');
-                    if (demoControls) demoControls.style.display = 'none';
-                } else {
-                    // Desktop: Keep phone frame
-                    wrapper.classList.add('phone-frame');
-                    if (demoControls) demoControls.style.display = 'block';
-                }
+                // Production mode: always fullscreen, no demo controls
+                wrapper.classList.remove('phone-frame', 'tablet-app');
+                wrapper.classList.add('fullscreen-app');
+                if (demoControls) demoControls.style.display = 'none';
+                
+                // Update status bar time to real time on all devices
+                this.updateRealTime();
             }
 
             updateRealTime() {
