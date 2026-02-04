@@ -1196,6 +1196,11 @@ class UIRenderer {
                                 <span class="settings-value">${Math.floor(user.dailyGoalMinutes / 60)}h ${user.dailyGoalMinutes % 60}m</span>
                                 <span class="settings-arrow">›</span>
                             </div>
+                            <div class="settings-item" onclick="authUI.handleLogout()" style="color: var(--urgent-red);">
+                                <span class="settings-icon">🚪</span>
+                                <span class="settings-label">Sign Out</span>
+                                <span class="settings-arrow">›</span>
+                            </div>
                         </div>
                     </div>
 
