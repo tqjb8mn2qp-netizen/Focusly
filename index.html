@@ -67,10 +67,11 @@
     
     <!-- Stylesheet -->
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="auth-styles.css">
     
     <!-- Security Headers -->
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob:; img-src 'self' data: blob: https:;">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob: https://accounts.google.com https://appleid.apple.com; img-src 'self' data: blob: https:; frame-src https://accounts.google.com https://appleid.apple.com;">
 
 </head>
 <body>
@@ -302,6 +303,31 @@
         window.deviceDetector = deviceDetector; // Make available globally
     </script>
 
+    <!-- Authentication & App Scripts -->
+    <script src="auth.js"></script>
+    <script src="auth-ui.js"></script>
     <script src="app.js"></script>
+    
+    <!-- Initialize Authentication -->
+    <script>
+        // Initialize Auth Manager
+        const authManager = new AuthManager();
+        window.authManager = authManager;
+        
+        // Wait for DOM to be ready
+        document.addEventListener('DOMContentLoaded', () => {
+            // Initialize Auth UI
+            authUI = new AuthUI(authManager, window.app);
+            window.authUI = authUI;
+            
+            // Check if user is authenticated
+            if (!authManager.isAuthenticated()) {
+                console.log('[Auth] User not authenticated, showing sign-in screen');
+                authUI.showAuthScreen();
+            } else {
+                console.log('[Auth] User authenticated:', authManager.getUser().email);
+            }
+        });
+    </script>
 </body>
 </html>
