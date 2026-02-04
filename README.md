@@ -1,17 +1,27 @@
 # Study Buddy - Smart Student Planner
 
-**Version 2.0 - FULLY FUNCTIONAL WEB APPLICATION** 🎉
+**Version 3.0 - FULLY FUNCTIONAL WEB APPLICATION** 🎉
 
-![Study Buddy Demo](https://img.shields.io/badge/Status-Fully%20Functional-success)
+![Study Buddy Demo](https://img.shields.io/badge/Status-Production%20Ready-success)
+![Version](https://img.shields.io/badge/Version-3.0-blue)
 ![Platform](https://img.shields.io/badge/Platform-Web%20App-blue)
 ![Data](https://img.shields.io/badge/Storage-LocalStorage-orange)
 
 ---
 
-## 🚀 What's New in v2.0
+## 🚀 What's New in v3.0 (NEW!)
 
-**This is now a REAL, WORKING application - not just a prototype!**
+**Major Feature Update - Enhanced Organization & Grade Tracking!**
 
+### 🆕 NEW Features
+✅ **Task Categories** - 4 assignment types: 📝 Homework, 📋 Quiz, 📚 Exam, 🎯 Project  
+✅ **Priority System** - High/Medium/Low priorities with color-coded borders (🔴🟡🟢)  
+✅ **Grade Tracker** - Complete grading system with GPA calculation on 4.0 scale  
+✅ **Quick Add FAB** - Floating action button for rapid task creation (<5 seconds)  
+✅ **Weighted Scoring** - Intelligent grade calculation based on assignment type  
+✅ **Visual Indicators** - Category badges, priority borders, grade displays  
+
+### ✨ From v2.0
 ✅ **Complete Data Persistence** - All data saved to localStorage  
 ✅ **Working Pomodoro Timer** - Real countdown with pause/resume  
 ✅ **Full CRUD Operations** - Add, edit, delete assignments & tasks  
@@ -51,17 +61,30 @@ Study Buddy is a comprehensive student productivity application designed to help
 
 1. **`README.md`** (this file)
    - Quick overview and getting started
-   - New functional features in v2.0
+   - What's new in v3.0
    - Live app link
 
-2. **`FUNCTIONAL_GUIDE.md`** ⭐ **NEW!**
+2. **`V3_COMPLETE.md`** ⭐ **NEW v3.0!**
+   - Complete v3.0 feature documentation
+   - Category & priority system guide
+   - Grade tracker implementation details
+   - Quick Add FAB usage
+   - Testing checklist and metrics
+   - **👉 Read this for v3.0 feature details!**
+
+3. **`FUNCTIONAL_GUIDE.md`** ⭐ **v2.0**
    - Complete user guide for the working app
    - How to use every feature
    - Data management instructions
    - FAQ and troubleshooting
    - **👉 Read this to learn how to use the app!**
 
-3. **`STUDENT_PLANNER_DESIGN.md`**
+4. **`V3_DESIGN.md`**
+   - v3.0 feature design specifications
+   - User flows and UX decisions
+   - MVP vs Premium feature split
+
+5. **`STUDENT_PLANNER_DESIGN.md`**
    - Original 67KB design document
    - Feature specifications
    - UX/UI guidelines
@@ -71,12 +94,12 @@ Study Buddy is a comprehensive student productivity application designed to help
 ### 💻 Functional Web App
 
 **Files:**
-- `index.html` - Main app structure
-- `styles.css` - Complete design system (20KB)
-- `app.js` - Full application logic (53KB)
-  - DataManager class (localStorage CRUD)
+- `index.html` - Main app structure with FAB
+- `styles.css` - Complete design system (21KB+)
+- `app.js` - Full application logic (56KB+)
+  - DataManager class (localStorage CRUD + grade calculations)
   - PomodoroTimer class (working timer)
-  - UIRenderer class (dynamic screens)
+  - UIRenderer class (dynamic screens including Grades tab)
   - ModalManager class (popups)
   - StudyBuddyApp class (main controller)
 
