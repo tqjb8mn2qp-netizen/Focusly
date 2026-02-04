@@ -1736,9 +1736,111 @@ document.addEventListener('DOMContentLoaded', () => {
     window.app = app; // For debugging
 });
 
-// Service Worker for offline support (optional)
+// ============================================
+// PWA INSTALL PROMPT & SERVICE WORKER
+// ============================================
+
+// Service Worker for offline support
 if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/sw.js').catch(() => {
-        // Service worker not available, that's okay
-    });
+    navigator.serviceWorker.register('/sw.js')
+        .then((registration) => {
+            console.log('[PWA] Service Worker registered:', registration.scope);
+            
+            // Check for updates every hour
+            setInterval(() => {
+                registration.update();
+            }, 60 * 60 * 1000);
+        })
+        .catch((error) => {
+            console.log('[PWA] Service Worker registration failed:', error);
+        });
+}
+
+// PWA Install Prompt
+let deferredPrompt;
+const installButton = document.createElement('button');
+installButton.textContent = '📱 Install App';
+installButton.className = 'install-prompt';
+installButton.style.cssText = `
+    position: fixed;
+    bottom: 90px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 12px 24px;
+    background: linear-gradient(135deg, #4A90E2, #667eea);
+    color: white;
+    border: none;
+    border-radius: 25px;
+    font-size: 15px;
+    font-weight: 600;
+    box-shadow: 0 4px 15px rgba(74, 144, 226, 0.4);
+    cursor: pointer;
+    z-index: 999;
+    display: none;
+    transition: all 0.3s;
+`;
+
+installButton.addEventListener('mouseover', () => {
+    installButton.style.transform = 'translateX(-50%) scale(1.05)';
+});
+
+installButton.addEventListener('mouseout', () => {
+    installButton.style.transform = 'translateX(-50%) scale(1)';
+});
+
+document.body.appendChild(installButton);
+
+// Listen for install prompt
+window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    
+    // Show install button (only on desktop/tablet)
+    if (window.deviceDetector && window.deviceDetector.deviceType !== 'mobile') {
+        installButton.style.display = 'block';
+    }
+    
+    console.log('[PWA] Install prompt available');
+});
+
+// Handle install button click
+installButton.addEventListener('click', async () => {
+    if (!deferredPrompt) {
+        return;
+    }
+    
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    
+    console.log('[PWA] User choice:', outcome);
+    
+    if (outcome === 'accepted') {
+        console.log('[PWA] App installed!');
+    }
+    
+    deferredPrompt = null;
+    installButton.style.display = 'none';
+});
+
+// Detect if app is installed
+window.addEventListener('appinstalled', () => {
+    console.log('[PWA] App successfully installed!');
+    installButton.style.display = 'none';
+    deferredPrompt = null;
+    
+    // Show success message
+    if (window.app && window.app.ui) {
+        window.app.ui.showToast('🎉 Study Buddy installed successfully!');
+    }
+});
+
+// Check if running as PWA
+function isPWA() {
+    return window.matchMedia('(display-mode: standalone)').matches ||
+           window.navigator.standalone === true;
+}
+
+if (isPWA()) {
+    console.log('[PWA] Running as installed app');
+    document.body.classList.add('is-pwa');
 }

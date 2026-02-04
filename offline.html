@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Offline - Study Buddy</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0;
+            padding: 20px;
+        }
+        .offline-container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 400px;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        .offline-icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+        }
+        h1 {
+            color: #2C3E50;
+            margin: 0 0 10px 0;
+            font-size: 28px;
+        }
+        p {
+            color: #7F8C8D;
+            line-height: 1.6;
+            margin: 0 0 30px 0;
+        }
+        .btn {
+            background: #4A90E2;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            transition: transform 0.2s;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            background: #3a7bc8;
+        }
+        .tips {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #ECF0F1;
+            text-align: left;
+        }
+        .tips h3 {
+            color: #4A90E2;
+            font-size: 16px;
+            margin: 0 0 10px 0;
+        }
+        .tips ul {
+            color: #7F8C8D;
+            font-size: 14px;
+            margin: 0;
+            padding-left: 20px;
+        }
+        .tips li {
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="offline-container">
+        <div class="offline-icon">📡</div>
+        <h1>You're Offline</h1>
+        <p>Study Buddy works offline once cached, but you're currently disconnected from the internet.</p>
+        
+        <button class="btn" onclick="window.location.reload()">
+            🔄 Try Again
+        </button>
+        
+        <div class="tips">
+            <h3>💡 Good News</h3>
+            <ul>
+                <li>Your data is saved locally</li>
+                <li>Study timer still works offline</li>
+                <li>All features available once cached</li>
+                <li>Changes sync when you're back online</li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html>
