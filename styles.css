@@ -823,6 +823,64 @@ body {
     color: var(--medium-gray);
 }
 
+/* Sign Out Button Special Styling */
+.settings-item.sign-out {
+    color: var(--urgent-red);
+    font-weight: 600;
+}
+
+.settings-item.sign-out:hover {
+    background: rgba(208, 2, 27, 0.05);
+}
+
+.settings-item.sign-out .settings-icon {
+    font-size: 24px;
+}
+
+.settings-item.sign-out .settings-label {
+    color: var(--urgent-red);
+}
+
+/* Auth Banner in Profile */
+.auth-banner {
+    background: linear-gradient(135deg, #4A90E2 0%, #667eea 100%);
+    padding: 16px 20px;
+    color: white;
+}
+
+.auth-banner-content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.auth-banner-icon {
+    font-size: 24px;
+}
+
+.auth-banner-text {
+    flex: 1;
+}
+
+.auth-banner-title {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 2px;
+}
+
+.auth-banner-email {
+    font-size: 12px;
+    opacity: 0.9;
+}
+
+.auth-banner-provider {
+    font-size: 12px;
+    background: rgba(255, 255, 255, 0.2);
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-weight: 500;
+}
+
 /* Demo Controls */
 .demo-controls {
     position: fixed;
