@@ -1,14 +1,12 @@
 // Firebase Configuration
-// IMPORTANT: Replace these values with YOUR actual Firebase config
-// Get these from: Firebase Console → Project Settings → Your apps → Web app
-
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY_HERE",
-  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_PROJECT_ID.appspot.com",
-  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyDePb8G4fh2fgXI9_UDnT-y1nm2ePvGU0o",
+  authDomain: "focusly-da00f.firebaseapp.com",
+  projectId: "focusly-da00f",
+  storageBucket: "focusly-da00f.firebasestorage.app",
+  messagingSenderId: "552503567149",
+  appId: "1:552503567149:web:29da8b78d7ef40680929a4",
+  measurementId: "G-RBw5L288PQ"
 };
 
 // Check if Firebase is configured
