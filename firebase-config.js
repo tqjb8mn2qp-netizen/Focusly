@@ -11,11 +11,23 @@ const firebaseConfig = {
   appId: "YOUR_APP_ID"
 };
 
-// Initialize Firebase
-firebase.initializeApp(firebaseConfig);
+// Check if Firebase is configured
+const isFirebaseConfigured = firebaseConfig.apiKey !== "YOUR_API_KEY_HERE";
 
-// Get Firebase services
-const auth = firebase.auth();
-const db = firebase.firestore();
+if (isFirebaseConfigured) {
+  // Initialize Firebase
+  firebase.initializeApp(firebaseConfig);
 
-console.log('🔥 Firebase initialized successfully!');
+  // Get Firebase services
+  window.auth = firebase.auth();
+  window.db = firebase.firestore();
+
+  console.log('🔥 Firebase initialized successfully!');
+} else {
+  console.warn('⚠️ Firebase not configured yet. App will use localStorage only.');
+  console.warn('📖 See FIREBASE_SETUP_COMPLETE.md for setup instructions.');
+  
+  // Set auth and db to undefined so app knows Firebase isn't available
+  window.auth = undefined;
+  window.db = undefined;
+}

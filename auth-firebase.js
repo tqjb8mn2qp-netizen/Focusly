@@ -1,29 +1,53 @@
 // Firebase Authentication Manager
-// Real authentication using Firebase
+// Real authentication using Firebase (with localStorage fallback)
 
 class AuthManager {
     constructor() {
         this.user = null;
         this.unsubscribe = null;
+        this.storageKey = 'studyBuddyAuth';
+        this.usersKey = 'studyBuddyUsers';
+        this.useFirebase = typeof auth !== 'undefined' && auth !== null;
+        
+        if (this.useFirebase) {
+            console.log('[Auth] Using Firebase authentication');
+        } else {
+            console.log('[Auth] Using localStorage authentication (Firebase not configured)');
+        }
+        
         this.init();
     }
 
     init() {
-        // Listen for auth state changes
-        this.unsubscribe = auth.onAuthStateChanged((user) => {
-            if (user) {
-                this.user = {
-                    id: user.uid,
-                    email: user.email,
-                    name: user.displayName || 'User',
-                    emailVerified: user.emailVerified
-                };
-                console.log('[Auth] User signed in:', this.user.email);
-            } else {
-                this.user = null;
-                console.log('[Auth] User signed out');
+        if (this.useFirebase) {
+            // Firebase auth state listener
+            this.unsubscribe = auth.onAuthStateChanged((user) => {
+                if (user) {
+                    this.user = {
+                        id: user.uid,
+                        email: user.email,
+                        name: user.displayName || 'User',
+                        emailVerified: user.emailVerified
+                    };
+                    console.log('[Auth] User signed in:', this.user.email);
+                } else {
+                    this.user = null;
+                    console.log('[Auth] User signed out');
+                }
+            });
+        } else {
+            // Load from localStorage
+            const saved = localStorage.getItem(this.storageKey);
+            if (saved) {
+                try {
+                    const data = JSON.parse(saved);
+                    this.user = data.user;
+                    this.token = data.token;
+                } catch (e) {
+                    console.error('[Auth] Failed to parse saved auth:', e);
+                }
             }
-        });
+        }
     }
 
     // ============================================
@@ -31,57 +55,122 @@ class AuthManager {
     // ============================================
 
     async signUpWithEmail(email, password, name) {
-        try {
-            // Create user account in Firebase
-            const userCredential = await auth.createUserWithEmailAndPassword(email, password);
-            
-            // Update profile name
-            await userCredential.user.updateProfile({
-                displayName: name
-            });
-            
-            // Save user profile to Firestore
-            await db.collection('users').doc(userCredential.user.uid).set({
-                name: name,
-                email: email,
-                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                gradeLevel: '11th Grade',
-                dailyGoalMinutes: 120
-            });
-            
-            console.log('[Auth] Sign-up successful:', email);
-            
-            return { 
-                success: true, 
-                user: {
-                    id: userCredential.user.uid,
+        if (this.useFirebase) {
+            // Firebase sign up
+            try {
+                const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+                await userCredential.user.updateProfile({ displayName: name });
+                
+                await db.collection('users').doc(userCredential.user.uid).set({
+                    name: name,
                     email: email,
-                    name: name
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    gradeLevel: '11th Grade',
+                    dailyGoalMinutes: 120
+                });
+                
+                console.log('[Auth] Sign-up successful:', email);
+                
+                return { 
+                    success: true, 
+                    user: { id: userCredential.user.uid, email: email, name: name }
+                };
+            } catch (error) {
+                console.error('[Auth] Sign-up failed:', error);
+                return { success: false, error: this.getErrorMessage(error.code) };
+            }
+        } else {
+            // localStorage sign up (fallback)
+            try {
+                if (!this.validateEmail(email)) {
+                    throw new Error('Invalid email address');
                 }
-            };
-        } catch (error) {
-            console.error('[Auth] Sign-up failed:', error);
-            return { success: false, error: this.getErrorMessage(error.code) };
+                if (password.length < 6) {
+                    throw new Error('Password must be at least 6 characters');
+                }
+                
+                const users = this.getAllUsers();
+                if (users.find(u => u.email === email)) {
+                    throw new Error('Email already registered');
+                }
+                
+                const user = {
+                    id: this.generateUserId(),
+                    email,
+                    name: name.trim(),
+                    provider: 'email',
+                    createdAt: new Date().toISOString()
+                };
+                
+                const hashedPassword = await this.hashPassword(password);
+                users.push({ ...user, password: hashedPassword });
+                this.saveAllUsers(users);
+                
+                this.token = this.generateToken(user);
+                this.user = user;
+                this.save();
+                
+                console.log('[Auth] Sign-up successful (localStorage):', email);
+                return { success: true, user };
+            } catch (error) {
+                console.error('[Auth] Sign-up failed:', error);
+                return { success: false, error: error.message };
+            }
         }
     }
 
     async signInWithEmail(email, password) {
-        try {
-            const userCredential = await auth.signInWithEmailAndPassword(email, password);
-            
-            console.log('[Auth] Sign-in successful:', email);
-            
-            return { 
-                success: true, 
-                user: {
-                    id: userCredential.user.uid,
-                    email: userCredential.user.email,
-                    name: userCredential.user.displayName
+        if (this.useFirebase) {
+            // Firebase sign in
+            try {
+                const userCredential = await auth.signInWithEmailAndPassword(email, password);
+                
+                console.log('[Auth] Sign-in successful:', email);
+                
+                return { 
+                    success: true, 
+                    user: {
+                        id: userCredential.user.uid,
+                        email: userCredential.user.email,
+                        name: userCredential.user.displayName
+                    }
+                };
+            } catch (error) {
+                console.error('[Auth] Sign-in failed:', error);
+                return { success: false, error: this.getErrorMessage(error.code) };
+            }
+        } else {
+            // localStorage sign in (fallback)
+            try {
+                if (!this.validateEmail(email)) {
+                    throw new Error('Invalid email address');
                 }
-            };
-        } catch (error) {
-            console.error('[Auth] Sign-in failed:', error);
-            return { success: false, error: this.getErrorMessage(error.code) };
+                
+                const users = this.getAllUsers();
+                const user = users.find(u => u.email === email);
+                
+                if (!user) {
+                    throw new Error('Invalid email or password');
+                }
+                
+                const passwordValid = await this.verifyPassword(password, user.password);
+                if (!passwordValid) {
+                    throw new Error('Invalid email or password');
+                }
+                
+                const userData = { ...user };
+                delete userData.password;
+                
+                this.token = this.generateToken(userData);
+                this.user = userData;
+                this.save();
+                
+                console.log('[Auth] Sign-in successful (localStorage):', email);
+                return { success: true, user: userData };
+            } catch (error) {
+                console.error('[Auth] Sign-in failed:', error);
+                return { success: false, error: error.message };
+            }
         }
     }
 
@@ -90,11 +179,17 @@ class AuthManager {
     // ============================================
 
     async signInWithGoogle() {
+        if (!this.useFirebase) {
+            return { 
+                success: false, 
+                error: 'Google Sign-In requires Firebase. Please set up Firebase configuration first.' 
+            };
+        }
+        
         try {
             const provider = new firebase.auth.GoogleAuthProvider();
             const result = await auth.signInWithPopup(provider);
             
-            // Check if user profile exists, if not create it
             const userDoc = await db.collection('users').doc(result.user.uid).get();
             if (!userDoc.exists) {
                 await db.collection('users').doc(result.user.uid).set({
@@ -130,11 +225,17 @@ class AuthManager {
     // ============================================
 
     async signInWithApple() {
+        if (!this.useFirebase) {
+            return { 
+                success: false, 
+                error: 'Apple Sign-In requires Firebase. Please set up Firebase configuration first.' 
+            };
+        }
+        
         try {
             const provider = new firebase.auth.OAuthProvider('apple.com');
             const result = await auth.signInWithPopup(provider);
             
-            // Check if user profile exists, if not create it
             const userDoc = await db.collection('users').doc(result.user.uid).get();
             if (!userDoc.exists) {
                 await db.collection('users').doc(result.user.uid).set({
@@ -168,7 +269,11 @@ class AuthManager {
     // ============================================
 
     isAuthenticated() {
-        return auth.currentUser !== null;
+        if (this.useFirebase) {
+            return auth.currentUser !== null;
+        } else {
+            return this.user !== null;
+        }
     }
 
     getUser() {
@@ -176,12 +281,19 @@ class AuthManager {
     }
 
     async logout() {
-        try {
-            await auth.signOut();
+        if (this.useFirebase) {
+            try {
+                await auth.signOut();
+                this.user = null;
+                console.log('[Auth] Logged out successfully');
+            } catch (error) {
+                console.error('[Auth] Logout failed:', error);
+            }
+        } else {
             this.user = null;
-            console.log('[Auth] Logged out successfully');
-        } catch (error) {
-            console.error('[Auth] Logout failed:', error);
+            this.token = null;
+            localStorage.removeItem(this.storageKey);
+            console.log('[Auth] Logged out (localStorage)');
         }
     }
 
@@ -225,5 +337,52 @@ class AuthManager {
     validateEmail(email) {
         const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         return re.test(email);
+    }
+    
+    // ============================================
+    // LOCALSTORAGE HELPER METHODS (Fallback)
+    // ============================================
+    
+    save() {
+        localStorage.setItem(this.storageKey, JSON.stringify({
+            user: this.user,
+            token: this.token
+        }));
+    }
+    
+    getAllUsers() {
+        const saved = localStorage.getItem(this.usersKey);
+        return saved ? JSON.parse(saved) : [];
+    }
+    
+    saveAllUsers(users) {
+        localStorage.setItem(this.usersKey, JSON.stringify(users));
+    }
+    
+    async hashPassword(password) {
+        const encoder = new TextEncoder();
+        const data = encoder.encode(password + 'salt_study_buddy');
+        const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+    
+    async verifyPassword(password, hash) {
+        const testHash = await this.hashPassword(password);
+        return testHash === hash;
+    }
+    
+    generateToken(user) {
+        const payload = {
+            userId: user.id,
+            email: user.email,
+            iat: Date.now(),
+            exp: Date.now() + (7 * 24 * 60 * 60 * 1000)
+        };
+        return btoa(JSON.stringify(payload));
+    }
+    
+    generateUserId() {
+        return 'user_' + Date.now().toString(36) + Math.random().toString(36).substr(2);
     }
 }
