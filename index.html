@@ -156,6 +156,14 @@
         <button id="reset-demo" class="reset-btn">🔄 Reset Demo</button>
     </div>
 
+    <!-- Firebase SDK v9 (compat mode for easier integration) -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    
+    <!-- Firebase Configuration -->
+    <script src="firebase-config.js"></script>
+
     <!-- Device detector script (runs before app.js) -->
     <script>
         // Device Detection and Responsive Layout Handler
@@ -293,7 +301,7 @@
     </script>
 
     <!-- Authentication & App Scripts -->
-    <script src="auth.js"></script>
+    <script src="auth-firebase.js"></script>
     <script src="auth-ui.js"></script>
     <script src="app.js"></script>
     

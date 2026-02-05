@@ -12,7 +12,24 @@ class DataManager {
         this.initializeData();
     }
 
-    initializeData() {
+    async initializeData() {
+        // Try to load from Firestore first if user is authenticated
+        if (typeof auth !== 'undefined' && auth.currentUser) {
+            try {
+                const doc = await db.collection('userData').doc(auth.currentUser.uid).get();
+                if (doc.exists) {
+                    this.data = doc.data().data;
+                    // Also save to localStorage for offline access
+                    localStorage.setItem(this.storageKey, JSON.stringify(this.data));
+                    console.log('[Data] Loaded from cloud');
+                    return;
+                }
+            } catch (error) {
+                console.error('[Data] Failed to load from cloud:', error);
+            }
+        }
+        
+        // Fall back to localStorage
         const stored = localStorage.getItem(this.storageKey);
         if (!stored) {
             // First-time setup with demo data
@@ -63,8 +80,23 @@ class DataManager {
         return Date.now().toString(36) + Math.random().toString(36).substr(2);
     }
 
-    save() {
+    async save() {
+        // Save locally for offline support
         localStorage.setItem(this.storageKey, JSON.stringify(this.data));
+        
+        // Save to Firestore if user is authenticated and Firebase is available
+        if (typeof auth !== 'undefined' && auth.currentUser) {
+            try {
+                await db.collection('userData').doc(auth.currentUser.uid).set({
+                    data: this.data,
+                    lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                console.log('[Data] Synced to cloud');
+            } catch (error) {
+                console.error('[Data] Cloud sync failed:', error);
+                // Local save still works even if cloud sync fails
+            }
+        }
     }
 
     // User operations
