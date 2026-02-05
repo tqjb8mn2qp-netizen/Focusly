@@ -409,7 +409,7 @@ class AuthUI {
         if (result.success) {
             this.onAuthSuccess(result.user);
         } else {
-            alert('Google sign-in failed: ' + result.error);
+            this.showError('Google Sign-In Failed', result.error);
         }
     }
 
@@ -419,7 +419,7 @@ class AuthUI {
         if (result.success) {
             this.onAuthSuccess(result.user);
         } else {
-            alert('Apple sign-in failed: ' + result.error);
+            this.showError('Apple Sign-In Failed', result.error);
         }
     }
 
@@ -510,6 +510,48 @@ class AuthUI {
             setTimeout(() => {
                 this.showAuthScreen();
             }, 500);
+        }
+    }
+
+    // Show error message with detailed information
+    showError(title, message) {
+        // Create a professional error modal
+        const errorModal = `
+            <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 10000;" onclick="this.remove()">
+                <div style="background: white; border-radius: 12px; padding: 24px; max-width: 400px; margin: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.3);" onclick="event.stopPropagation()">
+                    <div style="text-align: center; margin-bottom: 16px;">
+                        <div style="font-size: 48px; margin-bottom: 12px;">⚠️</div>
+                        <h3 style="margin: 0; color: #E53E3E; font-size: 20px; font-weight: 600;">${title}</h3>
+                    </div>
+                    <p style="color: #4A5568; line-height: 1.6; margin: 16px 0; font-size: 15px;">${message}</p>
+                    ${message.includes('domain') ? `
+                        <div style="background: #FFF5F5; border-left: 4px solid #E53E3E; padding: 12px; margin: 16px 0; border-radius: 4px;">
+                            <p style="margin: 0; font-size: 13px; color: #742A2A;">
+                                <strong>💡 Quick Fix:</strong><br>
+                                Add your domain to Firebase Console → Authentication → Settings → Authorized domains
+                            </p>
+                        </div>
+                    ` : ''}
+                    <button onclick="this.closest('div[style*=fixed]').remove()" style="width: 100%; background: #4A90E2; color: white; border: none; padding: 12px 24px; border-radius: 8px; font-size: 15px; font-weight: 500; cursor: pointer; margin-top: 8px;">
+                        OK
+                    </button>
+                </div>
+            </div>
+        `;
+        
+        // Remove any existing error modals
+        document.querySelectorAll('div[style*="position: fixed"]').forEach(el => {
+            if (el.textContent.includes(title)) el.remove();
+        });
+        
+        // Add the new error modal
+        document.body.insertAdjacentHTML('beforeend', errorModal);
+    }
+
+    // Show toast notification
+    showToast(message, type = 'info') {
+        if (this.app && this.app.ui && this.app.ui.showToast) {
+            this.app.ui.showToast(message);
         }
     }
 }

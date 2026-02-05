@@ -187,11 +187,16 @@ class AuthManager {
         }
         
         try {
+            console.log('[Auth] Starting Google sign-in...');
             const provider = new firebase.auth.GoogleAuthProvider();
+            
+            console.log('[Auth] Opening Google sign-in popup...');
             const result = await auth.signInWithPopup(provider);
             
+            console.log('[Auth] Google sign-in popup completed, checking user document...');
             const userDoc = await db.collection('users').doc(result.user.uid).get();
             if (!userDoc.exists) {
+                console.log('[Auth] Creating new user document in Firestore...');
                 await db.collection('users').doc(result.user.uid).set({
                     name: result.user.displayName,
                     email: result.user.email,
@@ -215,7 +220,18 @@ class AuthManager {
                 }
             };
         } catch (error) {
-            console.error('[Auth] Google sign-in failed:', error);
+            console.error('[Auth] Google sign-in failed with code:', error.code);
+            console.error('[Auth] Google sign-in error message:', error.message);
+            console.error('[Auth] Full error:', error);
+            
+            // Log helpful debugging information
+            if (error.code === 'auth/unauthorized-domain') {
+                console.error('[Auth] 🚨 UNAUTHORIZED DOMAIN ERROR');
+                console.error('[Auth] Your domain needs to be added to Firebase Console');
+                console.error('[Auth] Go to: https://console.firebase.google.com/project/focusly-da00f/authentication/settings');
+                console.error('[Auth] Add this domain to authorized domains:', window.location.hostname);
+            }
+            
             return { success: false, error: this.getErrorMessage(error.code) };
         }
     }
@@ -325,10 +341,18 @@ class AuthManager {
             'auth/user-disabled': 'This account has been disabled',
             'auth/user-not-found': 'Invalid email or password',
             'auth/wrong-password': 'Invalid email or password',
-            'auth/popup-closed-by-user': 'Sign-in popup was closed',
+            'auth/popup-closed-by-user': 'Sign-in popup was closed before completing',
             'auth/cancelled-popup-request': 'Only one popup request is allowed at a time',
-            'auth/popup-blocked': 'Sign-in popup was blocked by the browser',
-            'auth/network-request-failed': 'Network error. Check your connection'
+            'auth/popup-blocked': 'Sign-in popup was blocked by your browser. Please allow popups for this site.',
+            'auth/unauthorized-domain': 'This domain is not authorized for OAuth operations. Please add this domain to your Firebase Console authorized domains list.',
+            'auth/network-request-failed': 'Network error. Please check your internet connection and try again.',
+            'auth/internal-error': 'An internal error occurred. Please try again in a few moments.',
+            'auth/invalid-api-key': 'Invalid Firebase API key. Please check your configuration.',
+            'auth/app-deleted': 'Firebase app has been deleted. Please contact support.',
+            'auth/invalid-user-token': 'Your session has expired. Please sign in again.',
+            'auth/user-token-expired': 'Your session has expired. Please sign in again.',
+            'auth/web-storage-unsupported': 'Your browser does not support web storage. Please enable cookies.',
+            'auth/timeout': 'The operation timed out. Please try again.'
         };
         
         return errorMessages[errorCode] || 'An error occurred. Please try again.';
